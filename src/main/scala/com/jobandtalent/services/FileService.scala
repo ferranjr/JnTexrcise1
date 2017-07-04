@@ -14,5 +14,4 @@ import scala.concurrent.Future
 trait FileService {
 
   def loadFile(filePath: String): Future[Set[UserHandle]]
-  def saveFile(filePath: String, lines: List[String]): Future[Unit]
 }

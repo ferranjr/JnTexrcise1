@@ -1,7 +1,7 @@
 package com.jobandtalent
 
-import com.jobandtalent.models.{UserHandle, UserNode}
-import com.jobandtalent.services.{FileService, GithubService, UserStorageService, TwitterService}
+import com.jobandtalent.models.{GHOrganisation, UserHandle, UserNode}
+import com.jobandtalent.services.{FileService, GithubService, TwitterService, UserStorageService}
 import com.jobandtalent.utils.Graph
 import com.jobandtalent.utils.Graph.Edge
 
@@ -15,7 +15,6 @@ object Exercise
 }
 
 
-@Singleton
 class Program(
   fileService: FileService,
   githubService: GithubService,
@@ -23,48 +22,61 @@ class Program(
   storageService: UserStorageService
 )(implicit executionContext: ExecutionContext) {
 
-  private[this] def genUserNodes(handles: Set[UserHandle]): Future[Set[UserNode]] = {
+  private[this] def retrieveOrganisations(handles: Set[UserHandle]): Future[List[(UserHandle, Set[GHOrganisation])]] = {
     val result =
       handles.map { userHandle =>
         githubService.getOrganisations(userHandle)
           .map { orgs =>
-            UserNode(userHandle, orgs.toSet)
+            userHandle -> orgs.toSet
           }
       }
 
-    Future.sequence(result)
+    Future.sequence(result).map(_.toList)
   }
 
-  private[this] def getAllEdges(handles: Set[UserHandle]): Future[List[Edge[UserNode]]] = {
+  private[this] def retrieveEdges(userHandles: Set[UserHandle]): Future[List[Edge[UserHandle]]] = {
     val edges =
-      handles.map { userHandle =>
+      userHandles.map { userHandle =>
         twitterService
           .getFriends(userHandle)
           .map { friends =>
+
             friends
-              .filter(el => handles.contains(UserHandle(el.screenName)))
-              .map(Edge(userHandle,_))
+              .filter(el => userHandles.contains(UserHandle(el.screenName)))
+              .map(tu => Edge(userHandle, UserHandle(tu.screenName)))
           }
       }
 
-    Future.sequence(edges).flatten
+    Future.sequence(edges).map(_.toList.flatten)
   }
 
-  private[this] def getMaximalCliques(graph: Graph[UserNode]): Future[Set[Set[UserNode]]] = ???
+  private[this] def addUserOgranisations(handleToOrganisations: List[(UserHandle, Set[GHOrganisation])]): Future[Unit] = {
+    val result =
+      handleToOrganisations.map { case (userHandle, orgs) =>
+        storageService.addUserOgranisations(userHandle, orgs)
+      }
 
+    Future.sequence(result).map(_.foreach(_ => ()))
+  }
 
-  def process(path: String): Future[Unit] = {
+  /**
+    * Main method
+    * ~~~~
+    *
+    *
+    * @param path
+    * @return
+    */
+  def process(path: String): Future[List[Set[UserHandle]]] = {
     for {
       userHandles <- fileService.loadFile(path)
-      userNodes <- genUserNodes(userHandles)
-      _ <- storageService.addUserNodes(userNodes.toList)
-      edges <- getAllEdges(userHandles)
-      _ <- storageService.addEdges(edges)
-      graph <- storageService.extractGraph
-      cliques <- getMaximalCliques(graph)
-      lines = cliques.map(_.mkString(",")).toList
-      result <- fileService.saveFile(path, lines)
+      _           <- storageService.addUserNodes(userHandles.toList)
+      edges       <- retrieveEdges(userHandles)
+      orgs        <- retrieveOrganisations(userHandles)
+      _           <- addUserOgranisations(orgs)
+      _           <- storageService.addEdges(edges)
+      cliques     <- storageService.getAllCliques
     }
-      yield result
+      yield storageService.filterNonMaximalCliques(cliques)
   }
 }

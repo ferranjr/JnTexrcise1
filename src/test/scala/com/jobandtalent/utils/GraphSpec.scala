@@ -151,4 +151,21 @@ class GraphSpec
     graph.areStronglyConnected(2, 1) shouldBe true
     graph.areStronglyConnected(1, 3) shouldBe false
   }
+
+  it should "generate powerset properly" in {
+    val graphTry =
+      for {
+        g1 <- Success(Digraph[Node]())
+        g2 <- g1.addNode(1)
+        g3 <- g2.addNode(2)
+        g4 <- g3.addNode(3)
+      } yield g4
+
+    graphTry shouldBe a[Success[_]]
+    val graph = graphTry.get
+
+    graph.powerSet should contain theSameElementsAs Set(
+      Set(), Set(1), Set(2), Set(3), Set(1, 2), Set(1, 3), Set(2, 3), Set(1, 2, 3)
+    )
+  }
 }

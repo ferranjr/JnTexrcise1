@@ -3,6 +3,8 @@ package com.jobandtalent.utils
 import scala.util.{Failure, Success, Try}
 import Graph._
 
+import scala.annotation.tailrec
+
 /**
   * Graph implementation to be the core of this application,
   * as the edges between nodes are defined by user following another user, this
@@ -25,6 +27,15 @@ trait Graph[Node] {
   def contains(in: Node): Boolean = nodes.contains(in)
   def areConnected(a: Node, b: Node): Boolean = adjacentNodes.get(a).exists(_.contains(b))
   def areStronglyConnected(a: Node, b: Node): Boolean = areConnected(a, b)
+
+  def powerSet: Set[Set[Node]] = {
+    @tailrec
+    def pwr(t: Set[Node], pwrSet: Set[Set[Node]]): Set[Set[Node]] =
+      if (t.isEmpty) pwrSet
+      else pwr(t.tail, pwrSet ++ pwrSet.map(_ + t.head))
+
+    pwr(nodes, Set(Set.empty[Node]))
+  }
 }
 
 object Graph {
@@ -48,9 +59,9 @@ object Graph {
 case class Digraph[Node](adjacentNodes: Map[Node, Set[Node]] = Map.empty[Node,Set[Node]])
   extends Graph[Node] {
 
-  def nodes: Set[Node] = adjacentNodes.keySet
+  lazy val nodes: Set[Node] = adjacentNodes.keySet
 
-  def addNode(in: Node): Try[Graph[Node]] = {
+  def addNode(in: Node): Try[Digraph[Node]] = {
     if(nodes.contains(in)) {
       Failure(NodeAlreadyExists(in))
     } else {
@@ -62,7 +73,7 @@ case class Digraph[Node](adjacentNodes: Map[Node, Set[Node]] = Map.empty[Node,Se
     areConnected(a, b) && areConnected(b, a)
   }
 
-  def addEdge(in: Edge[Node]): Try[Graph[Node]] = {
+  def addEdge(in: Edge[Node]): Try[Digraph[Node]] = {
     if(!nodes.contains(in.from) || !nodes.contains(in.to)) {
       Failure(MissingNodesForEdge(in.from, in.to))
     } else if (adjacentNodes(in.from).contains(in.to)) {
