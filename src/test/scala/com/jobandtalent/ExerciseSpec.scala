@@ -28,8 +28,6 @@ class ExerciseSpec
 
   "process" should "get list of maximal cliques as expected" in {
     whenReady(testProgram.process(fakePath)) { res =>
-      res.foreach(println)
-      println(mockStorageService.organisations)
       res should contain theSameElementsAs Set(
         Set(fooHandle, bazHandle)
       )
@@ -63,9 +61,9 @@ object ExerciseSpec {
   val mockGithubService = new GithubService {
     def getOrganisations(user: UserHandle): Future[List[GHOrganisation]] =
       Future.successful {
-        if(user == fooHandle)
+        if (user == fooHandle)
           List(organisation1, organisation2)
-        else if(user == bazHandle)
+        else if (user == bazHandle)
           List(organisation1)
         else
           List(organisation3)

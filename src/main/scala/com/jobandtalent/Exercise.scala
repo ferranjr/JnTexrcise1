@@ -1,19 +1,15 @@
 package com.jobandtalent
 
-import com.jobandtalent.models.{GHOrganisation, UserHandle, UserNode}
+import com.jobandtalent.models.{GHOrganisation, UserHandle}
 import com.jobandtalent.services._
-import com.jobandtalent.utils.Graph
 import com.jobandtalent.utils.Graph.Edge
 
 import scala.concurrent.{ExecutionContext, Future}
 
-
 object Exercise
   extends App {
 
-
 }
-
 
 class Program(
   fileService: FileService,
@@ -31,11 +27,7 @@ class Program(
           }
       }
 
-    Future.sequence(result)
-      .map { res =>
-        println(res)
-        res.toList
-      }
+    Future.sequence(result).map { _.toList }
   }
 
   private[this] def retrieveEdges(userHandles: Set[UserHandle]): Future[List[Edge[UserHandle]]] = {
@@ -56,31 +48,31 @@ class Program(
 
   private[this] def addUserOgranisations(handleToOrganisations: List[(UserHandle, Set[GHOrganisation])]): Future[Unit] = {
     val result =
-      handleToOrganisations.map { case (userHandle, orgs) =>
-        storageService.addUserOgranisations(userHandle, orgs)
+      handleToOrganisations.map {
+        case (userHandle, orgs) =>
+          storageService.addUserOgranisations(userHandle, orgs)
       }
 
     Future.sequence(result).map(_.foreach(_ => ()))
   }
 
   /**
-    * Main method
-    * ~~~~
-    *
-    *
-    * @param path
-    * @return
-    */
+   * Main method
+   * ~~~~
+   *
+   *
+   * @param path
+   * @return
+   */
   def process(path: String): Future[List[Set[UserHandle]]] = {
     for {
       userHandles <- fileService.loadFile(path)
-      _           <- storageService.addUserNodes(userHandles.toList)
-      edges       <- retrieveEdges(userHandles)
-      orgs        <- retrieveOrganisations(userHandles)
-      _           <- addUserOgranisations(orgs)
-      _           <- storageService.addEdges(edges)
-      cliques     <- storageService.getAllCliques
-    }
-      yield storageService.filterNonValidMaximalCliques(cliques)
+      _ <- storageService.addUserNodes(userHandles.toList)
+      edges <- retrieveEdges(userHandles)
+      orgs <- retrieveOrganisations(userHandles)
+      _ <- addUserOgranisations(orgs)
+      _ <- storageService.addEdges(edges)
+      cliques <- storageService.getAllCliques
+    } yield storageService.filterNonValidMaximalCliques(cliques)
   }
 }
