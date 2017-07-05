@@ -2,17 +2,18 @@ package com.jobandtalent
 
 import com.jobandtalent.models.{GHOrganisation, TwitterUser, UserHandle}
 import com.jobandtalent.services._
-import com.jobandtalent.utils.Graph
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{FlatSpec, Matchers}
 
-import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
 class ExerciseSpec
   extends FlatSpec
-    with Matchers {
+  with Matchers
+  with ScalaFutures {
 
   import ExerciseSpec._
 
@@ -23,13 +24,16 @@ class ExerciseSpec
     mockStorageService
   )
 
+  implicit val patientConfig: PatienceConfig = PatienceConfig(timeout = 10 seconds)
 
   "process" should "get list of maximal cliques as expected" in {
-    val res = Await.result(testProgram.process(fakePath), 3 seconds)
-
-    res should contain theSameElementsAs Set(
-      Set(fooHandle, barHandle, bazHandle)
-    )
+    whenReady(testProgram.process(fakePath)) { res =>
+      res.foreach(println)
+      println(mockStorageService.organisations)
+      res should contain theSameElementsAs Set(
+        Set(fooHandle, bazHandle)
+      )
+    }
   }
 }
 
@@ -61,21 +65,21 @@ object ExerciseSpec {
       Future.successful {
         if(user == fooHandle)
           List(organisation1, organisation2)
-        else if(user == barHandle)
+        else if(user == bazHandle)
           List(organisation1)
         else
-          List(organisation1, organisation2, organisation3)
+          List(organisation3)
       }
   }
 
   val mockTwitterService = new TwitterService {
     def getFriends(user: UserHandle): Future[List[TwitterUser]] =
       Future.successful {
-        if(user == fooHandle)
+        if (user == fooHandle)
           List(twitterUserBar, twitterUserBaz)
-        else if(user == barHandle)
+        else if (user == barHandle)
           List(twitterUserFoo, twitterUserBaz)
-        else if(user == bazHandle)
+        else if (user == bazHandle)
           List(twitterUserOther, twitterUserFoo, twitterUserBar)
         else
           List(twitterUserFoo, twitterUserOther, twitterUserBaz, twitterUserBar)

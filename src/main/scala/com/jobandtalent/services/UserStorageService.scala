@@ -8,15 +8,14 @@ import scala.annotation.tailrec
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-
 /**
-  * StorageService
-  * ~~~~~~
-  *
-  * We will use it to store all the users.
-  * Internally we will use the Directional Graph, although this could be
-  * replace by the usage of Graph Database if we wanted to
-  */
+ * StorageService
+ * ~~~~~~
+ *
+ * We will use it to store all the users.
+ * Internally we will use the Directional Graph, although this could be
+ * replace by the usage of Graph Database if we wanted to
+ */
 trait UserStorageService {
 
   def extractGraph: Graph[UserHandle]
@@ -30,9 +29,8 @@ trait UserStorageService {
   def addUserOgranisations(userHandle: UserHandle, orgs: Set[GHOrganisation]): Future[Unit]
 
   def getAllCliques: Future[Set[Set[UserHandle]]]
-  def filterNonMaximalCliques(cliques: Set[Set[UserHandle]]): List[Set[UserHandle]]
+  def filterNonValidMaximalCliques(cliques: Set[Set[UserHandle]]): List[Set[UserHandle]]
 }
-
 
 class DigraphUserStorageService
   extends UserStorageService {
@@ -59,7 +57,9 @@ class DigraphUserStorageService
     Future.sequence(edges.map(addEdge)).map(_ => ())
 
   def addUserOgranisations(userHandle: UserHandle, orgs: Set[GHOrganisation]): Future[Unit] = {
-    Future(organisations.updated(userHandle, orgs))
+    Future.successful {
+      organisations = organisations.updated(userHandle, orgs)
+    }
   }
 
   def getAllCliques: Future[Set[Set[UserHandle]]] = {
@@ -78,18 +78,26 @@ class DigraphUserStorageService
     }
   }
 
-  def filterNonMaximalCliques(
+  def shareSameOrganisation(xs: Set[UserHandle]): Boolean = {
+    xs.map { h =>
+      organisations.getOrElse(h, Set.empty[GHOrganisation])
+    }
+    .reduce[Set[GHOrganisation]] { (a, b) => a.intersect(b) }
+    .nonEmpty
+  }
+
+  def filterNonValidMaximalCliques(
     cliques: Set[Set[UserHandle]]
   ): List[Set[UserHandle]] = {
-
     @tailrec
     def recurse(
       xs: List[Set[UserHandle]],
       solutions: List[Set[UserHandle]]
     ): List[Set[UserHandle]] = {
-      if(xs.isEmpty)
+      if (xs.isEmpty)
         solutions
-      else if(!solutions.exists(s => xs.head.forall(s.contains)))
+      else if (shareSameOrganisation(xs.head) &&
+        !solutions.exists(s => xs.head.forall(s.contains)))
         recurse(xs.tail, xs.head :: solutions)
       else
         recurse(xs.tail, solutions)

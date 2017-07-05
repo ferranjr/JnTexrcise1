@@ -1,7 +1,7 @@
 package com.jobandtalent
 
 import com.jobandtalent.models.{GHOrganisation, UserHandle, UserNode}
-import com.jobandtalent.services.{FileService, GithubService, TwitterService, UserStorageService}
+import com.jobandtalent.services._
 import com.jobandtalent.utils.Graph
 import com.jobandtalent.utils.Graph.Edge
 
@@ -31,7 +31,11 @@ class Program(
           }
       }
 
-    Future.sequence(result).map(_.toList)
+    Future.sequence(result)
+      .map { res =>
+        println(res)
+        res.toList
+      }
   }
 
   private[this] def retrieveEdges(userHandles: Set[UserHandle]): Future[List[Edge[UserHandle]]] = {
@@ -77,6 +81,6 @@ class Program(
       _           <- storageService.addEdges(edges)
       cliques     <- storageService.getAllCliques
     }
-      yield storageService.filterNonMaximalCliques(cliques)
+      yield storageService.filterNonValidMaximalCliques(cliques)
   }
 }
