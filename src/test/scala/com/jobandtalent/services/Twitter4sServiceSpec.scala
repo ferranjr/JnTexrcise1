@@ -22,7 +22,7 @@ class Twitter4sServiceSpec
   with MockitoSugar {
 
 
-  "Twitter4sService" should "conver results into our TwitterUser" in {
+  "Twitter4sService" should "convert results into our TwitterUser" in {
 
     val mockClient = mock[TwitterRestClient]
 

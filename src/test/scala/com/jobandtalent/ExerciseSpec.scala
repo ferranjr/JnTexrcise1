@@ -54,8 +54,8 @@ object ExerciseSpec {
   val twitterUserOther = TwitterUser(4L, "Other")
 
   val mockFileService = new FileService {
-    def loadFile(filePath: String): Future[Set[UserHandle]] =
-      Future.successful(Set(fooHandle, barHandle, bazHandle))
+    override def loadUserHandlers(filePath: String): Set[UserHandle] =
+      Set(fooHandle, barHandle, bazHandle)
   }
 
   val mockGithubService = new GithubService {

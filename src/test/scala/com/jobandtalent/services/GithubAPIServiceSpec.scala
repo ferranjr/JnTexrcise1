@@ -18,7 +18,7 @@ class GithubAPIServiceSpec
   with MockitoSugar
   with ScalaFutures {
 
-  "GithubApiService" should "conver organisations into our format" in {
+  "GithubApiService" should "convert organisations into our format" in {
     val githubClient = mock[GitHubAPI]
 
     when(githubClient.listUserOrganizations("ferranjr")).thenReturn(Future.successful(
