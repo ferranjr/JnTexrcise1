@@ -35,11 +35,29 @@ libraries for your target programming language.
 # Implementation
 
 
+
 ## Trade-Offs and decisions made
+
+I went for the most basic implementation algorithm for cliques. Left for the end, but it took me longer than expected
+to deal with the Twitter Ratelimit limitations, which I didn't considered from the very beginning. 
+
+Todo:
+[ ] Check, if possible, https://en.wikipedia.org/wiki/Bron%E2%80%93Kerbosch_algorithm as more performand solution.
+[ ] Improve error handling with 3rd party services... also, not very happy with any of the two clients used. 
 
 
 ## Requirements and Configuration
 
+Configuration it's only require to run the application, which is basically set up the following environment or
+go and modify the application.conf with your values.
+
+```bash
+export TWITTER_CONSUMER_KEY='yourvaluehere'
+export TWITTER_CONSUMER_SECRET='yourvaluehere'
+export TWITTER_ACCESS_TOKEN_KEY='yourvaluehere'
+export TWITTER_ACCESS_TOKEN_SECRET='yourvaluehere'
+export GITHUB_ACCESS_TOKEN='yourvaluehere'
+```
 
 ## How to Run the tests
 
@@ -48,3 +66,10 @@ sbt test
 ```
 
 ## How to Build and Run application
+
+The only required parameter is the path to the source file where users are defined, but a results path can be
+specified.
+
+```bash
+sbt "run path/to/sourcefile.txt path/to/resultPath.txt
+```
