@@ -71,6 +71,9 @@ object ExerciseSpec {
   }
 
   val mockTwitterService = new TwitterService {
+
+    def getUsersFriendship(userA: UserHandle, userB: UserHandle): Future[Map[UserHandle, UserHandle]] = ???
+
     def getFriends(user: UserHandle): Future[List[TwitterUser]] =
       Future.successful {
         if (user == fooHandle)
