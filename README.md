@@ -42,8 +42,9 @@ I went for the most basic implementation algorithm for cliques. Left for the end
 to deal with the Twitter Ratelimit limitations, which I didn't considered from the very beginning. 
 
 Todo:
-[ ] Check, if possible, https://en.wikipedia.org/wiki/Bron%E2%80%93Kerbosch_algorithm as more performand solution.
-[ ] Improve error handling with 3rd party services... also, not very happy with any of the two clients used. 
+
+- [ ] Check, if possible, https://en.wikipedia.org/wiki/Bron%E2%80%93Kerbosch_algorithm as more performand solution.
+- [ ] Improve error handling with 3rd party services... also, not very happy with any of the two clients used. 
 
 
 ## Requirements and Configuration
