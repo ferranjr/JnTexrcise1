@@ -2,7 +2,6 @@ package com.jobandtalent.services
 
 import com.jobandtalent.models.{GHOrganisation, UserHandle}
 import codecheck.github.api.GitHubAPI
-import codecheck.github.exceptions.NotFoundException
 import com.typesafe.scalalogging.StrictLogging
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -41,8 +40,8 @@ class GithubAPIService(
         organisations.map(org => GHOrganisation(org.id, org.login))
       }
       .recover {
-        case t: NotFoundException =>
-          logger.warn(s"User ${user.value} doesn't have a github account.")
+        case t: Throwable =>
+          logger.warn(s"Error retrieving ${user.value}.")
           List()
       }
   }

@@ -42,6 +42,7 @@ object ExerciseSpec {
   val fooHandle = UserHandle("foo")
   val barHandle = UserHandle("bar")
   val bazHandle = UserHandle("baz")
+  val otherHandle = UserHandle("other")
 
   val organisation1 = GHOrganisation(1L, "org1")
   val organisation2 = GHOrganisation(2L, "org2")
@@ -72,7 +73,19 @@ object ExerciseSpec {
 
   val mockTwitterService = new TwitterService {
 
-    def getUsersFriendship(userA: UserHandle, userB: UserHandle): Future[Map[UserHandle, UserHandle]] = ???
+    def getUsersFriendship(userA: UserHandle, userB: UserHandle): Future[Map[UserHandle, UserHandle]] =
+      (userA, userB) match {
+        case (a, b)
+          if ((a == fooHandle && b == barHandle) || (a == barHandle && b == fooHandle)) ||
+            ((a == fooHandle && b == bazHandle) || (a == bazHandle && b == fooHandle)) ||
+            ((a == barHandle && b == bazHandle) || (a == bazHandle && b == barHandle))  =>
+          Future.successful(Map(a -> b, b -> a))
+        case (a, b)
+          if (a == bazHandle && b == otherHandle) || (a == otherHandle && b == bazHandle) =>
+          Future.successful(Map(a -> b))
+        case _ =>
+          Future.successful(Map())
+      }
 
     def getFriends(user: UserHandle): Future[List[TwitterUser]] =
       Future.successful {

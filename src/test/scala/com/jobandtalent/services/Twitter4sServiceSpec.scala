@@ -26,8 +26,8 @@ class Twitter4sServiceSpec
 
     val mockClient = mock[TwitterRestClient]
 
-    when(mockClient.friendsForUser("ferranjr")).thenReturn(Future.successful(
-      RatedData(RateLimit(0,0, 0), Users(
+    when(mockClient.friendsForUser("ferranjr", -1, count = 100, skip_status = true)).thenReturn(Future.successful(
+      RatedData(RateLimit(0, 0, 0), Users(
         Seq(fakeUser(1L, "foo"), fakeUser(2L, "bar"), fakeUser(3L, "baz")), 0, 0)
     )))
 
@@ -39,6 +39,78 @@ class Twitter4sServiceSpec
       )
     }
   }
+
+  it should "get 'strong' friendships as edges" in {
+
+    val mockClient = mock[TwitterRestClient]
+    val userA = UserHandle("userA")
+    val userB = UserHandle("userB")
+
+    when(mockClient.relationshipBetweenUsers(userA.value, userB.value)).thenReturn(Future.successful{
+      RatedData(RateLimit(0, 0, 0), Relationship(
+        RelationshipOverview(
+          RelationshipSource(1L, "1", userA.value, following = true, followed_by = true),
+          RelationshipTarget(2L, "2", userB.value, following = true, followed_by = true)
+        )
+      ))
+    })
+
+    val testService = new Twitter4sService(mockClient)
+
+    whenReady(testService.getUsersFriendship(userA, userB)) { res =>
+      res should contain theSameElementsAs Set(
+        userA -> userB, userB -> userA
+      )
+    }
+  }
+
+  it should "get 'one direction' friendships as one edge" in {
+
+    val mockClient = mock[TwitterRestClient]
+    val userA = UserHandle("userA")
+    val userB = UserHandle("userB")
+
+    when(mockClient.relationshipBetweenUsers(userA.value, userB.value)).thenReturn(Future.successful{
+      RatedData(RateLimit(0, 0, 0), Relationship(
+        RelationshipOverview(
+          RelationshipSource(1L, "1", userA.value, following = true, followed_by = false),
+          RelationshipTarget(2L, "2", userB.value, following = false, followed_by = true)
+        )
+      ))
+    })
+
+    val testService = new Twitter4sService(mockClient)
+
+    whenReady(testService.getUsersFriendship(userA, userB)) { res =>
+      res should contain theSameElementsAs Set(
+        userA -> userB
+      )
+    }
+  }
+
+
+  it should "get 'no' friendship as none edges" in {
+
+    val mockClient = mock[TwitterRestClient]
+    val userA = UserHandle("userA")
+    val userB = UserHandle("userB")
+
+    when(mockClient.relationshipBetweenUsers(userA.value, userB.value)).thenReturn(Future.successful{
+      RatedData(RateLimit(0, 0, 0), Relationship(
+        RelationshipOverview(
+          RelationshipSource(1L, "1", userA.value, following = false, followed_by = false),
+          RelationshipTarget(2L, "2", userB.value, following = false, followed_by = false)
+        )
+      ))
+    })
+
+    val testService = new Twitter4sService(mockClient)
+
+    whenReady(testService.getUsersFriendship(userA, userB)) { res =>
+      res shouldBe empty
+    }
+  }
+
 
   private def fakeUser(id: Long, screenName: String): User = {
     User(
