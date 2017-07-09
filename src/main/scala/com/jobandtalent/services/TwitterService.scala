@@ -35,11 +35,11 @@ class Twitter4sService(
     logger.debug(s"Retrieving connexions for ${user.value}")
 
     def helper(cursor: Long, acc: Seq[User]): Future[Seq[User]] = {
-      twitterClient.friendsForUser(user.value)
+      twitterClient.friendsForUser(user.value, cursor, count = 100, skip_status = true)
         .flatMap { ratedUser =>
           logger.debug(s"Twitter Friends for ${user.value} cursor[$cursor]: \n")
 
-          if(ratedUser.rate_limit.remaining > 0) {
+          if(ratedUser.data.next_cursor != 0) {
             helper(ratedUser.data.next_cursor, ratedUser.data.users ++ acc)
           } else {
             Future.successful(ratedUser.data.users ++ acc)
