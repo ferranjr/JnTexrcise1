@@ -22,6 +22,5 @@ case class UserNode(
 
 case class GHOrganisation(
   id: Long,
-  login: String,
-  description: String
+  login: String
 )

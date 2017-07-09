@@ -42,3 +42,6 @@ project/plugins/project/
 .cache
 .lib/
 
+/setEnv.sh
+/src/main/resources/local.conf
+/results.txt

@@ -43,10 +43,10 @@ object ExerciseSpec {
   val barHandle = UserHandle("bar")
   val bazHandle = UserHandle("baz")
 
-  val organisation1 = GHOrganisation(1L, "org1", "description")
-  val organisation2 = GHOrganisation(2L, "org2", "description")
-  val organisation3 = GHOrganisation(3L, "org3", "description")
-  val organisation4 = GHOrganisation(4L, "org4", "description")
+  val organisation1 = GHOrganisation(1L, "org1")
+  val organisation2 = GHOrganisation(2L, "org2")
+  val organisation3 = GHOrganisation(3L, "org3")
+  val organisation4 = GHOrganisation(4L, "org4")
 
   val twitterUserFoo = TwitterUser(1L, "foo")
   val twitterUserBar = TwitterUser(2L, "bar")

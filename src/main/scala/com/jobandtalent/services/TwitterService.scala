@@ -1,8 +1,12 @@
 package com.jobandtalent.services
 
 import com.danielasfregola.twitter4s.TwitterRestClient
+import com.danielasfregola.twitter4s.entities.User
+import com.danielasfregola.twitter4s.exceptions.TwitterException
 import com.jobandtalent.models.{TwitterUser, UserHandle}
+import com.typesafe.scalalogging.StrictLogging
 
+import scala.annotation.tailrec
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -24,12 +28,33 @@ trait TwitterService {
 class Twitter4sService(
   private[this] val twitterClient: TwitterRestClient
 )(implicit executionContext: ExecutionContext)
-  extends TwitterService {
+  extends TwitterService
+  with StrictLogging {
 
   def getFriends(user: UserHandle): Future[List[TwitterUser]] = {
-    twitterClient.friendsForUser(user.value)
-      .map { ratedUser =>
-        ratedUser.data.users.map(TwitterUser.apply).toList
+    logger.debug(s"Retrieving connexions for ${user.value}")
+
+    def helper(cursor: Long, acc: Seq[User]): Future[Seq[User]] = {
+      twitterClient.friendsForUser(user.value)
+        .flatMap { ratedUser =>
+          logger.debug(s"Twitter Friends for ${user.value} cursor[$cursor]: \n")
+
+          if(ratedUser.rate_limit.remaining > 0) {
+            helper(ratedUser.data.next_cursor, ratedUser.data.users ++ acc)
+          } else {
+            Future.successful(ratedUser.data.users ++ acc)
+          }
+        }
+    }
+
+    helper(cursor = -1, List()).map { friends =>
+      logger.debug(s"Friends for $user:\n${friends.map(_.screen_name).mkString("- ", ", ", ".")}")
+      friends.map(TwitterUser.apply).toList
+    }
+      .recover {
+        case t:TwitterException =>
+          logger.error(s"Unable to extract list of friends from twitter. ${t.getMessage}", t)
+          List()
       }
   }
 }

@@ -2,6 +2,8 @@ package com.jobandtalent.services
 
 import com.jobandtalent.models.{GHOrganisation, UserHandle}
 import codecheck.github.api.GitHubAPI
+import codecheck.github.exceptions.NotFoundException
+import com.typesafe.scalalogging.StrictLogging
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -28,11 +30,20 @@ trait GithubService {
 class GithubAPIService(
   private[this] val githubClient: GitHubAPI
 )(implicit executionContext: ExecutionContext)
-  extends GithubService {
+  extends GithubService
+  with StrictLogging {
 
   def getOrganisations(user: UserHandle): Future[List[GHOrganisation]] = {
-    githubClient.listUserOrganizations(user = user.value).map { organisations =>
-      organisations.map(org => GHOrganisation(org.id, org.login, org.description))
-    }
+    logger.debug(s"Retrieving organisations for user: ${user.value}")
+    githubClient.listUserOrganizations(user = user.value)
+      .map { organisations =>
+        logger.debug(s"Organisations for ${user.value}: ${organisations.map(_.login).mkString("," )}")
+        organisations.map(org => GHOrganisation(org.id, org.login))
+      }
+      .recover {
+        case t: NotFoundException =>
+          logger.warn(s"User ${user.value} doesn't have a github account.")
+          List()
+      }
   }
 }

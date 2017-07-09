@@ -4,15 +4,16 @@ import com.ning.http.client.AsyncHttpClient
 import codecheck.github.transport.asynchttp19.AsyncHttp19Transport
 import codecheck.github.api.GitHubAPI
 import com.danielasfregola.twitter4s.TwitterRestClient
-import com.jobandtalent.models.UserHandle
 import com.jobandtalent.services._
 import com.typesafe.config.ConfigFactory
+import com.typesafe.scalalogging.StrictLogging
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success, Try}
 
 
-object Exercise {
+object Exercise
+  extends StrictLogging {
 
   private val conf = ConfigFactory.load()
   private val githubAccessToken = conf.getString("github.access.token")
@@ -43,10 +44,12 @@ object Exercise {
         program.process(fileOrigin)
           .onComplete {
             case Success(results) =>
-              println(s"Request processed successfully, check your results at $results.")
               fileService.saveResults(fileDestination, results)
+              logger.info(s"Request processed successfully, check your results at $results.")
+              sys.exit(0)
             case Failure(error) =>
-              println(s"Something went wrong processing your request.")
+              logger.error(s"Something went wrong processing your request.", error)
+              sys.exit(1)
           }
       }
   }

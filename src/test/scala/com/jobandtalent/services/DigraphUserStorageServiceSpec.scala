@@ -17,8 +17,8 @@ class DigraphUserStorageServiceSpec
   val handleUserB = UserHandle("userB")
   val handleUserC = UserHandle("userC")
 
-  val orgGithub = GHOrganisation(1L, "github", "description")
-  val orgFooBar = GHOrganisation(2L, "foobar", "description")
+  val orgGithub = GHOrganisation(1L, "github")
+  val orgFooBar = GHOrganisation(2L, "foobar")
 
   "DigraphUserStorageService" should "add users properly" in {
 

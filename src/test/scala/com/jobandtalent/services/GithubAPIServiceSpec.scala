@@ -29,8 +29,8 @@ class GithubAPIServiceSpec
 
     whenReady(testService.getOrganisations(UserHandle("ferranjr"))) { res =>
       res should contain theSameElementsAs Set(
-        GHOrganisation(1L, "jobandtalent", "foo"),
-        GHOrganisation(2L, "ferranjr", "foo")
+        GHOrganisation(1L, "jobandtalent"),
+        GHOrganisation(2L, "ferranjr")
       )
     }
   }
